@@ -3,49 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Firebase PSC</title>
+    <title>GameHub Premium</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-        button, input { padding: 10px; margin: 5px 0; width: 100%; }
-        .premium { color: green; font-weight: bold; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #121212;
+            color: #ffffff;
+        }
+        .container {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+        input, button {
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border: none;
+            width: 100%;
+        }
+        input {
+            background-color: #2d2d2d;
+            color: white;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .premium-badge {
+            color: gold;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+        .game-list {
+            margin-top: 20px;
+        }
+        .game-item {
+            background-color: #252525;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>Test Firebase PSC</h1>
-
-    <!-- Panel logowania -->
-    <div id="auth-section">
-        <h2>Logowanie</h2>
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="password" placeholder="Hasło">
-        <button onclick="login()">Zaloguj</button>
-        <button onclick="register()">Zarejestruj</button>
-    </div>
-
-    <!-- Panel użytkownika -->
-    <div id="user-section" style="display: none;">
-        <h2>Witaj, <span id="user-email"></span>!</h2>
-        <p>Status: <span id="premium-status">NIE PREMIUM</span></p>
+    <div class="container">
+        <h1>GameHub Premium 🎮</h1>
         
-        <h3>Aktywuj Premium (PSC)</h3>
-        <input type="text" id="psc-code" placeholder="Wpisz 16-cyfrowy kod">
-        <button onclick="activatePSC()">Wyślij kod</button>
+        <!-- Sekcja logowania -->
+        <div id="auth-section">
+            <h2>Zaloguj się</h2>
+            <input type="email" id="email" placeholder="Email">
+            <input type="password" id="password" placeholder="Hasło">
+            <button onclick="login()">Zaloguj</button>
+            <button onclick="register()">Zarejestruj</button>
+        </div>
         
-        <button onclick="logout()">Wyloguj</button>
+        <!-- Sekcja użytkownika -->
+        <div id="user-section" class="hidden">
+            <h2>Witaj, <span id="user-email"></span> 
+                <span id="premium-badge" class="premium-badge hidden">PREMIUM</span>
+            </h2>
+            
+            <!-- Formularz PSC -->
+            <div id="psc-section">
+                <h3>Aktywuj Premium</h3>
+                <input type="text" id="psc-code" placeholder="Wpisz kod PSC (16 cyfr)" maxlength="16">
+                <button onclick="activatePSC()">Aktywuj kod</button>
+                <p id="psc-message"></p>
+            </div>
+            
+            <!-- Lista gier (tylko dla premium) -->
+            <div id="game-section" class="hidden">
+                <h3>Twoje gry premium:</h3>
+                <div class="game-list">
+                    <div class="game-item">
+                        <h4>Cyberpunk 2077</h4>
+                        <button onclick="downloadGame('cyberpunk')">Pobierz</button>
+                    </div>
+                    <div class="game-item">
+                        <h4>The Witcher 3</h4>
+                        <button onclick="downloadGame('witcher')">Pobierz</button>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="logout()" style="background-color: #f44336;">Wyloguj</button>
+        </div>
     </div>
 
     <script>
-        // 🔥 Konfiguracja Firebase (użyj SWOICH danych z Firebase Console!)
+        // 🔥 Twoja konfiguracja Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyDECwBnJzGnD8oo4ttRPUNkYYzRMO4Euno",
-            authDomain: "psc2025-ee3b5.firebaseapp.com",
-            projectId: "psc2025-ee3b5",
-            storageBucket: "psc2025-ee3b5.appspot.com",
-            messagingSenderId: "990291382716",
-            appId: "1:990291382716:web:964df65b498ba7e61a9bb9"
+            apiKey: "AIzaSyDSnaIpcZok1JjOUkWoXzbnkvbMksDxRP0",
+            authDomain: "gamehub2025.firebaseapp.com",
+            projectId: "gamehub2025",
+            storageBucket: "gamehub2025.appspot.com",
+            messagingSenderId: "963276457050",
+            appId: "1:963276457050:web:fe39f09907ef6361594463"
         };
 
         // Inicjalizacja Firebase
@@ -53,79 +124,117 @@
         const db = firebase.firestore();
         const auth = firebase.auth();
 
-        // Obsługa logowania/rejestracji
+        // Funkcje logowania/rejestracji
         function login() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            
             auth.signInWithEmailAndPassword(email, password)
-                .then(() => alert("Zalogowano!"))
-                .catch(err => alert("Błąd: " + err.message));
+                .then(() => {
+                    console.log("Zalogowano pomyślnie!");
+                })
+                .catch(error => {
+                    alert("Błąd logowania: " + error.message);
+                });
         }
 
         function register() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            
             auth.createUserWithEmailAndPassword(email, password)
-                .then(() => alert("Konto stworzone!"))
-                .catch(err => alert("Błąd: " + err.message));
+                .then((userCredential) => {
+                    // Dodaj użytkownika do kolekcji users
+                    return db.collection('users').doc(userCredential.user.uid).set({
+                        email: email,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        premium: false
+                    });
+                })
+                .then(() => {
+                    alert("Konto zostało utworzone!");
+                })
+                .catch(error => {
+                    alert("Błąd rejestracji: " + error.message);
+                });
         }
 
         function logout() {
             auth.signOut();
         }
 
-        // Wysyłanie kodu PSC
+        // Aktywacja kodu PSC
         function activatePSC() {
             const code = document.getElementById('psc-code').value;
             const user = auth.currentUser;
             
             if (!user) {
-                alert("Najpierw się zaloguj!");
+                alert("Musisz być zalogowany!");
                 return;
             }
             
-            if (code.length !== 16) {
-                alert("Kod musi mieć 16 cyfr!");
+            if (code.length !== 16 || !/^\d+$/.test(code)) {
+                alert("Kod musi składać się z 16 cyfr!");
                 return;
             }
-
+            
             // Zapisz kod w Firestore
-            db.collection("pscCodes").add({
+            db.collection('pscCodes').add({
                 userId: user.uid,
                 code: code,
                 status: "pending",
-                date: new Date()
-            }).then(() => alert("Kod wysłany! Administrator zweryfikuje go wkrótce."));
+                date: new Date(),
+                email: user.email
+            }).then(() => {
+                document.getElementById('psc-message').textContent = "Kod został wysłany do weryfikacji!";
+                document.getElementById('psc-message').style.color = "#4CAF50";
+            }).catch(error => {
+                document.getElementById('psc-message').textContent = "Błąd: " + error.message;
+                document.getElementById('psc-message').style.color = "#f44336";
+            });
         }
 
         // Sprawdzanie statusu premium
-        function checkPremium() {
+        function checkPremiumStatus() {
             const user = auth.currentUser;
             if (!user) return;
             
-            db.collection("premiumUsers").doc(user.uid).get()
+            db.collection('premiumUsers').doc(user.uid).get()
                 .then(doc => {
-                    const isPremium = doc.exists && doc.data().premium;
-                    document.getElementById('premium-status').textContent = isPremium ? "PREMIUM" : "NIE PREMIUM";
-                    document.getElementById('premium-status').className = isPremium ? "premium" : "";
+                    const isPremium = doc.exists;
+                    if (isPremium) {
+                        document.getElementById('premium-badge').classList.remove('hidden');
+                        document.getElementById('game-section').classList.remove('hidden');
+                        document.getElementById('psc-section').classList.add('hidden');
+                    } else {
+                        document.getElementById('premium-badge').classList.add('hidden');
+                        document.getElementById('game-section').classList.add('hidden');
+                        document.getElementById('psc-section').classList.remove('hidden');
+                    }
                 });
         }
 
-        // Obsługa zmian stanu użytkownika
+        // Symulacja pobierania gry
+        function downloadGame(gameName) {
+            alert("Rozpoczynanie pobierania: " + gameName + "\n(To tylko demonstracja)");
+        }
+
+        // Obserwuj zmiany stanu autentykacji
         auth.onAuthStateChanged(user => {
             const authSection = document.getElementById('auth-section');
             const userSection = document.getElementById('user-section');
             
             if (user) {
-                authSection.style.display = "none";
-                userSection.style.display = "block";
+                authSection.classList.add('hidden');
+                userSection.classList.remove('hidden');
                 document.getElementById('user-email').textContent = user.email;
-                checkPremium();
-                // Sprawdzaj co 5 sekund, czy admin nadał premium
-                setInterval(checkPremium, 5000);
+                checkPremiumStatus();
+                
+                // Sprawdzaj status premium co 5 sekund
+                setInterval(checkPremiumStatus, 5000);
             } else {
-                authSection.style.display = "block";
-                userSection.style.display = "none";
+                authSection.classList.remove('hidden');
+                userSection.classList.add('hidden');
             }
         });
     </script>
